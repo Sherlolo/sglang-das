@@ -1057,6 +1057,14 @@ class DeepseekV4AttnBackend(
                     req_pool_indices=req_pool_indices,
                 )
             )
+            # TP/EP eager forwards may pad the token buffers beyond bs * gamma.
+            # Match prefill padding: request 0 and seq_len 1 give RoPE position 0.
+            padding = out_cache_loc.shape[0] - num_q_tokens
+            if padding > 0:
+                seq_lens_casual = F.pad(seq_lens_casual, (0, padding), value=1)
+                req_pool_indices_repeated = F.pad(
+                    req_pool_indices_repeated, (0, padding)
+                )
         core_attn_metadata = self.make_core_attn_metadata(
             req_to_token=self.req_to_token,
             req_pool_indices_repeated=req_pool_indices_repeated,

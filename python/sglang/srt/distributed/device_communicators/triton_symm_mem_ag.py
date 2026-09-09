@@ -460,6 +460,9 @@ class MultimemAllGatherer:
     ):
         self._max_tokens = int(max_tokens)
         self._skip_entry_sync = skip_entry_sync
+        # The kernels below emit NVIDIA PTX; HIP must use the RCCL fallback
+        # without entering symmetric-memory rendezvous.
+        enabled = enabled and torch.version.hip is None
         # None => always NCCL; _UNINIT => build on first eager call.
         self._state = self._UNINIT if enabled else None
         if self._state is self._UNINIT:

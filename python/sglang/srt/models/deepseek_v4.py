@@ -2364,8 +2364,11 @@ class DeepseekV4DecoderLayer(nn.Module):
             s, r = get_parallel().attn_tp_size, get_parallel().attn_tp_rank
             _a2a_scatter_chunks = list(hidden_states.tensor_split(s))
             hidden_states = _a2a_scatter_chunks[r].contiguous()
-            input_ids = input_ids.tensor_split(s)[r].contiguous()
-            input_ids_global = input_ids_global.tensor_split(s)[r].contiguous()
+            # DSpark's non-hash draft experts do not consume token IDs.
+            if input_ids is not None:
+                input_ids = input_ids.tensor_split(s)[r].contiguous()
+            if input_ids_global is not None:
+                input_ids_global = input_ids_global.tensor_split(s)[r].contiguous()
         # Skip the MoE-internal post-experts all_reduce when we will do the
         # reduce via reduce_scatterv/reduce_scatter at the combine below
         # (else double-reduce).
