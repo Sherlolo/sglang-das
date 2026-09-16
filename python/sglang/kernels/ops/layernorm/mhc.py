@@ -85,6 +85,9 @@ def _patch_tilelang_decouple_type_cast_for_rocm() -> None:
         return
 
     original_allocate = _dtc.Allocate
+    original_allocate = getattr(_dtc, "Allocate", None)
+    if original_allocate is None:
+        return
 
     def _is_bool_expr(expr) -> bool:
         try:
